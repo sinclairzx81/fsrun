@@ -12,7 +12,7 @@ const clean = () => task.drop("./bin")
 //------------------------------------
 const build = () => task.series(() => [
   task.shell("tsc test/index.ts --module commonjs --target es5 --removeComments --outDir ./bin"),
-  task.copy ("./src/fsrun.js", "./bin"),
+  task.copy ("./src/fsrun",    "./bin"),
   task.copy ("./package.json", "./bin"),
   task.copy ("./readme.md",    "./bin"),
   task.copy ("./license",      "./bin"),
