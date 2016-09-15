@@ -12,7 +12,7 @@ const clean = () => task.drop("./bin")
 //------------------------------------
 const build = () => task.series(() => [
   task.shell("tsc test/index.ts --module commonjs --target es5 --removeComments --outDir ./bin"),
-  task.copy ("./src/fsrun",    "./bin"),
+  task.copy ("./src/fsrun.js", "./bin"),
   task.copy ("./package.json", "./bin"),
   task.copy ("./readme.md",    "./bin"),
   task.copy ("./license",      "./bin"),
@@ -39,12 +39,20 @@ const uninstall = () => task.series(() => [
   task.shell("cd ./bin && npm uninstall -g .")
 ])
 
+//------------------------------------
+// publishes this module.
+//------------------------------------
+const publish = () => task.series(() => [
+  task.shell("cd ./bin && npm publish")
+])
+
 const cli = task.cli(process.argv, {
   "clean"     : clean(),
   "build"     : build(),
   "test"      : test(),
   "install"   : install(),
-  "uninstall" : uninstall()
+  "uninstall" : uninstall(),
+  "publish"   : publish()
 })
 
 task.debug(cli)
