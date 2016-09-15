@@ -11,7 +11,7 @@ fsrun ./ [dotnet build]
 ```
 ## install
 ```
-npm install fsrun
+npm install fsrun -g
 ```
 
 ## overview
