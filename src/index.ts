@@ -27,23 +27,47 @@ THE SOFTWARE.
 ---------------------------------------------------------------------------*/
 
 /// <reference path="typings/node/node.d.ts" />
-import {parse_argument} from "./parser/parse"
-import {resolve_path}   from "./cwd/resolve"
-import {create_process} from "./process/process"
-import {create_watcher} from "./watcher/watcher" 
-import {create_runtime} from "./runtime/runtime" 
 
-(function() {
+import {resolve_path, path_exists} from "./sys/sys"
+import {parse_argument}            from "./parser/parse"
+import {create_writer}             from "./writer/writer"
+import {create_process}            from "./process/process"
+import {create_watcher}            from "./watcher/watcher" 
+import {create_runtime}            from "./runtime/runtime" 
+
+(() => {   
+  let writer = create_writer(process.stdout)
+
   try {
-    let argument = parse_argument(process.argv)
-    argument.path = resolve_path (argument.path)
-    process.stdout.write(`\x1b[33m[w: ${argument.path}]\x1b[0m\n`)
+    //-----------------------------------------
+    // extract argument.
+    //-----------------------------------------
+    let argument   = parse_argument(process.argv)
+    argument.paths = argument.paths.map(path => resolve_path (path))
+
+    //-----------------------------------------
+    // validate paths.
+    //-----------------------------------------
+    argument.paths.forEach(path => {
+      if(path_exists(path) === false)
+        throw Error(`no such file or directory.`)
+    })
+    
+    //-----------------------------------------
+    // validate commands.
+    //-----------------------------------------
     if(argument.commands.length === 0)
       throw Error("nothing to run.")
-    let runtime   = create_runtime(argument, process.stdout)
+    
+    //-----------------------------------------
+    // start runtime and pipe to stdout.
+    //-----------------------------------------
+    argument.paths.forEach(path => writer.info(`[watching: ${path}]`))
+    let runtime   = create_runtime(argument, writer)
     runtime.start()
+
   } catch(e) {
-    process.stdout.write(e.message) 
+    writer.write(e.message)
   }
 })()
 

@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 import * as events                from "events"
 import {Argument}                 from "../parser/parse"
+import {IWriter}                  from "../writer/writer"
 import {create_watcher, IWatcher} from "../watcher/watcher"
 import {create_process, IProcess} from "../process/process"
 
@@ -43,7 +44,7 @@ export interface IRuntime {
 }
 class Runtime extends events.EventEmitter implements IRuntime {
   private state     : "pending" | "started" | "stopped"
-  private watcher   : IWatcher
+  private watchers  : Array<IWatcher>
   private processes : Array<IProcess>
   
   /**
@@ -52,39 +53,13 @@ class Runtime extends events.EventEmitter implements IRuntime {
    * @param {WritableStream} the output stream to pipe any process stdout / stderr.
    * @returns {IRuntime}
    */
-  constructor(private argument: Argument, private writer: NodeJS.WritableStream) {
+  constructor(private argument: Argument, private writer: IWriter) {
     super()
     this.state     = "pending"
-    this.watcher   = undefined
+    this.watchers  = []
     this.processes = []
   }
 
-  /**
-   * writes a process begin message on stdout.
-   * @param {number} the index number for the process.
-   * @returns {void}
-   */
-  private begin (index:number, shell: string) : void {
-      this.writer.write(`\x1b[33m[${index}: ${shell}]\x1b[0m\n`)
-  }
-
-  /**
-   * writes the process stdout / stderr out on stdout.
-   * @param {number} the index number for this process.
-   * @param {string} the data received on stdout / stderr. 
-   * @returns {void}
-   */
-  private log(index:number, data: string) : void {
-    this.writer.write(data)
-  }
-  /**
-   * writes a process end message on stdout.
-   * @param {number} the index number for the process.
-   * @returns {void}
-   */
-  private end (index:number) : void {
-    this.writer.write(`\x1b[33m[${index}: end]\x1b[0m\n`);
-  }
   /**
    * restarts all processes managed by this runtime.
    * @returns {void}
@@ -94,9 +69,9 @@ class Runtime extends events.EventEmitter implements IRuntime {
       this.processes = this.argument.commands.map((command, index) => 
         create_process(index, command))
       this.processes.forEach((proc, index) => {
-        this.begin(index, proc.shell())
-        proc.on("data", data => this.log(data[0], data[1]))
-        proc.on("end",  ()   => this.end(index))
+        this.writer.info(`[${index}: ${proc.shell()}]`)
+        proc.on("data", data => this.writer.write(data[1]))
+        proc.on("end",  ()   => this.writer.info(`[${index}: end]`))
         proc.start()
       })
   }
@@ -110,14 +85,16 @@ class Runtime extends events.EventEmitter implements IRuntime {
       case "pending":
         this.state   = "started"
         this.restart()
-        this.watcher = create_watcher (
-          this.argument.path, 
-          this.argument.timeout
-        )
-        this.watcher.on("data",   () => this.restart())
-        this.watcher.on("error",  () => {})
-        this.watcher.on("end",    () => {})
-        this.watcher.start()
+        this.watchers = this.argument.paths.map(path => {
+          let watcher = create_watcher (
+            path, this.argument.timeout
+          )
+          watcher.on("data",   () => this.restart())
+          watcher.on("error",  () => {})
+          watcher.on("end",    () => {})
+          watcher.start()
+          return watcher
+        })
         break;
       default:
         this.emit("error", "a runtime can only be started once.")
@@ -138,7 +115,7 @@ class Runtime extends events.EventEmitter implements IRuntime {
       case "started":
         this.state = "stopped"
         this.processes.forEach(process => process.dispose())
-        this.watcher.dispose()
+        this.watchers.forEach (watcher => watcher.dispose())
         this.emit("end")
         break;
       case "stopped":
@@ -153,6 +130,6 @@ class Runtime extends events.EventEmitter implements IRuntime {
  * @param {WritableStream} the output stream to pipe any process stdout / stderr.
  * @returns {IRuntime}
  */
-export function create_runtime(argument: Argument, writer: NodeJS.WritableStream) : IRuntime {
+export function create_runtime(argument: Argument,  writer: IWriter) : IRuntime {
   return new Runtime(argument, writer)
 }

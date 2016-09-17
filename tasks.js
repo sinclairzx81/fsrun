@@ -15,7 +15,7 @@ const build = () => task.series(() => [
   task.copy ("./src/fsrun",    "./bin"),
   task.copy ("./package.json", "./bin"),
   task.copy ("./readme.md",    "./bin"),
-  task.copy ("./license",      "./bin"),
+  task.copy ("./license",      "./bin")
 ])
 
 //------------------------------------

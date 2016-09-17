@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 /** fstart argument. */
 export interface Argument {
-  path      : string,
+  paths     : string [],
   commands  : string []
   timeout   : number
 }
@@ -63,12 +63,12 @@ function validate_input(input: string): boolean {
 }
 
 /**
- * resolves the path from the given input string. If 
- * no path is given, then resolve to cwd (denoted by ./)
+ * resolves the paths from the given input string. If 
+ * no paths is given, then resolve to cwd (denoted by ./)
  * @param {string} the input line.
  * @returns {Result<string>} 
  */
-function extract_path(input: string) : string {
+function extract_paths(input: string) : string[] {
   let buf  = []
   for(let n = 0; n < input.length; n++) {
     let ch = input.charAt(n)
@@ -78,9 +78,9 @@ function extract_path(input: string) : string {
       buf.push(input.charAt(n))
     }
   }
-  let path = buf.join('').trim()
-  path = path.length > 0 ? path : "./"
-  return path
+  let paths = buf.join('').trim()
+  paths = paths.length > 0 ? paths : "./"
+  return paths.split('+').map(seg => seg.trim())
 }
 
 /**
@@ -126,7 +126,7 @@ export function parse_argument(argv: string[]) : Argument {
   let input = extract_input(argv)
   if(validate_input(input) === false) throw Error("invalid argument")
   return {
-    path     : extract_path(input),
+    paths    : extract_paths(input),
     commands : extract_commands(input), 
     timeout  : 2000
   }

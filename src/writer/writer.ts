@@ -28,13 +28,53 @@ THE SOFTWARE.
 
 /// <reference path="../typings/node/node.d.ts" />
 
-import * as npath from "path"
+export interface IWriter {
+  info  (buffer: string): void
+  write (buffer: string): void
+}
+class Writer implements IWriter {
+  private last : string
+  /**
+   * creates a new writer.
+   * @param {WritableStream} the stream to write on.
+   * @returns {IWriter}
+   */
+  constructor(private stream: NodeJS.WritableStream) {
+    this.last = '\n'
+  }
+  /**
+   * writes a informational message.
+   * @param {string} the message to write.
+   * @returns {void}
+   */
+  public info (buffer: string) : void {
+    if(this.last === '\n') {
+      this.stream.write(`\x1b[90m${buffer}\x1b[0m`)
+      this.stream.write(`\n`)
+    } else {
+      this.stream.write(`\n`)
+      this.stream.write(`\x1b[90m${buffer}\x1b[0m`)
+      this.stream.write(`\n`)
+    }
+    this.last = '\n'
+  }
+  
+  /**
+   * writes a message.
+   * @param {string} the message to write.
+   * @returns {void}
+   */
+  public write(buffer: string) : void {
+    this.last = buffer.length > 0 ? buffer.charAt(buffer.length - 1) : ''
+    this.stream.write(buffer)
+  } 
+}
 
 /**
- * resolves this path from the current working directory.
- * @param {string} the path to resolve.
- * @returns {string}
+ * creates a new writer.
+ * @param {WritableStream} the stream to write on.
+ * @returns {IWriter}
  */
-export function resolve_path(path: string) : string {
-  return npath.resolve(process.cwd(), path)
+export function create_writer(stream: NodeJS.WritableStream) : IWriter {
+  return new Writer(stream)
 }

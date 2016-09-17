@@ -26,23 +26,45 @@ on save" scenarios.
 
 ## running processes
 
-unless stated otherwise, fsrun will recursively watch the current working directory.
-```
-fsrun [echo one]
-```
-which is the same as:
-```
-fsrun ./ [echo one]
-```
-users can override the directory / file to watch by specifying a path. The path given
-should be absolute or pathed relative to the current working directory.
-```
-fsrun ../relative/path [echo one]
+fsrun will run shell commands written within the [] brackets. 
 
-fsrun c:/absolute/path/index.js [echo one]
 ```
-fsrun can run multiple processes on watch events by grouping shell commands inside [  ].
+fsrun [echo hello world]
+```
+By default, fsrun will watch the current working directory.
+```
+fsrun [echo hello world]
+```
+is the same as 
+```
+fsrun ./ [echo hello world]
+```
+
+users can explicity state which path to watch. The path given should be absolute or 
+pathed relative to the current working directory. The path should also preceed any commands.
+
+```
+fsrun ../relative/path [echo hello]
+
+fsrun c:/absolute/path/index.js [echo world]
+```
+
+### running multiple processes
+
+fsrun can run multiple processes. Each process is run concurrently and will be 
+started / restarted as a group on file system changes. 
+
 ```
 fnrun ./ [echo one] [echo two] [echo three]
 ```
-each process is run and rerun concurrently.
+
+### watching multiple paths
+
+It is possible to watch multiple paths by using the + modifier, The following watches the current working directory 
+and some 'c:/some/path' path.
+
+```
+fsrun ./ + c:/some/path [echo one]
+```
+
+
