@@ -148,7 +148,7 @@ runner.test("arguments: pattern 8 (expect error)", context => {
 })
 runner.test("arguments: pattern 9 (multiple path)", context => {
   try {
-    let arg = parse_argument(argv("./path1 + ./path2 [input a] [input b]"))
+    let arg = parse_argument(argv("./path1 ./path2 [input a] [input b]"))
     context.assert(arg.paths.length    === 2)
     context.assert(arg.paths[0]        === "./path1")
     context.assert(arg.paths[1]        === "./path2")

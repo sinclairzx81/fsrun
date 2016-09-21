@@ -80,7 +80,7 @@ function extract_paths(input: string) : string[] {
   }
   let paths = buf.join('').trim()
   paths = paths.length > 0 ? paths : "./"
-  return paths.split('+').map(seg => seg.trim())
+  return paths.split(' ').map(seg => seg.trim())
 }
 
 /**

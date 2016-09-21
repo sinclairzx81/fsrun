@@ -60,11 +60,11 @@ fnrun ./ [echo one] [echo two] [echo three]
 
 ### watching multiple paths
 
-It is possible to watch multiple paths by using the + modifier, The following watches the current working directory 
-and some 'c:/some/path' path.
+It is possible to watch multiple paths seperating each path with a space. The following watches ./this and ./that and echos hello.
 
 ```
-fsrun ./ + c:/some/path [echo one]
+fsrun ./this ./that [echo hello]
 ```
+
 
 
