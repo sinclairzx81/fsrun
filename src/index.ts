@@ -67,7 +67,7 @@ import {create_runtime}            from "./runtime/runtime"
     runtime.start()
 
   } catch(e) {
-    writer.write(e.message)
+    writer.write(e.message + "\n")
   }
 })()
 
