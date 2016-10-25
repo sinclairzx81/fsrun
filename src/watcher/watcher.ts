@@ -27,21 +27,50 @@ THE SOFTWARE.
 ---------------------------------------------------------------------------*/
 
 /// <reference path="../typings/node/node.d.ts" />
-import * as events  from "events"
-import * as fs      from "fs"
+import * as events from "events"
+import * as fs from "fs"
+
+/**
+ * Debounce:
+ * 
+ * file system watch debouncer. limits the 
+ * amount of events emitted from a file
+ * system watcher.
+ */
+class Debounce {
+  private handle: NodeJS.Timer
+  constructor(private delay: number) {
+    this.handle = undefined
+  }
+  /**
+   * runs the given function. If the function
+   * is called before this debouncers delay
+   * has elapsed, the event is rerun.
+   * @param {Function} the function to run.
+   * @returns {void}
+   */
+  public set(func: Function): void {
+    if (this.handle !== undefined) {
+      clearTimeout(this.handle)
+    }
+    this.handle = setTimeout(() => {
+      func(); this.handle = undefined;
+    }, this.delay)
+  }
+}
 
 export interface IWatcher {
-  on      (event: string,  func: Function)                         : IWatcher 
-  on      (event: "data",  func: (data: [string, string]) => void) : IWatcher 
-  on      (event: "error", func: (data: string) => void)           : IWatcher  
-  on      (event: "end",   func: () => void)                       : IWatcher 
-  start   () : void
-  dispose () : void
+  on(event: string, func: Function): IWatcher
+  on(event: "data", func: (data: [string, string]) => void): IWatcher
+  on(event: "error", func: (data: string) => void): IWatcher
+  on(event: "end", func: () => void): IWatcher
+  start(): void
+  dispose(): void
 }
 class Watcher extends events.EventEmitter implements IWatcher {
-  private state       : "pending" | "started" | "stopped"
-  private watcher     : fs.FSWatcher
-  private last_signal : Date
+  private state: "pending" | "started" | "stopped"
+  private watcher: fs.FSWatcher
+  private debounce: Debounce
   /**
    * creates a new watcher.
    * @param {string} the path of the file or directory to watch.
@@ -49,29 +78,24 @@ class Watcher extends events.EventEmitter implements IWatcher {
    * @returns {IWatcher}
    */
   constructor(public path: string, private timeout: number) {
-    super() 
-    this.state   = "pending"
+    super()
+    this.state = "pending"
     this.watcher = null
-    this.last_signal    = new Date()
+    this.debounce = new Debounce(20)
   }
   /**
    * starts this watcher.
    * @returns {void}
    */
-  public start() : void {
-    switch(this.state) {
+  public start(): void {
+    switch (this.state) {
       case "pending": {
         this.state = "started"
-        this.last_signal    = new Date()
-        let options = {recursive: true}
+        let options = { recursive: true }
         this.watcher = fs.watch(this.path, options, (event, filename) => {
-            let delta = (new Date()).getTime() - this.last_signal.getTime()
-            if(delta > this.timeout && this.state === "started") {
-              this.emit("data", [event, filename])
-              this.last_signal = new Date()
-            }
-          }); 
-          break;
+          this.debounce.set(() => this.emit("data", [event, filename]))
+        });
+        break;
       }
       default:
         this.emit("error", "cannot start a watcher more than once")
@@ -83,8 +107,8 @@ class Watcher extends events.EventEmitter implements IWatcher {
    * disposes this watcher.
    * @returns {void}
    */
-  public dispose() : void {
-    switch(this.state) {
+  public dispose(): void {
+    switch (this.state) {
       case "pending":
         this.state = "stopped"
         this.emit("end")
@@ -106,6 +130,6 @@ class Watcher extends events.EventEmitter implements IWatcher {
  * @param {number} the timeout in milliseconds to wait before restart.
  * @returns {IWatcher}
  */
-export function create_watcher(path: string, timeout: number) : IWatcher {
+export function create_watcher(path: string, timeout: number): IWatcher {
   return new Watcher(path, timeout)
 }
