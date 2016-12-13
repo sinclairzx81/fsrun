@@ -29,6 +29,7 @@ THE SOFTWARE.
 /// <reference path="../typings/node/node.d.ts" />
 
 import * as events                from "events"
+import * as readline              from "readline"
 import {Argument}                 from "../parser/parse"
 import {IWriter}                  from "../writer/writer"
 import {create_watcher, IWatcher} from "../watcher/watcher"
@@ -46,6 +47,7 @@ class Runtime extends events.EventEmitter implements IRuntime {
   private state     : "pending" | "started" | "stopped"
   private watchers  : Array<IWatcher>
   private processes : Array<IProcess>
+  private readline  : readline.ReadLine
   
   /**
    * creates a new runtime.
@@ -58,6 +60,13 @@ class Runtime extends events.EventEmitter implements IRuntime {
     this.state     = "pending"
     this.watchers  = []
     this.processes = []
+    
+    // write to each child process.
+    this.readline  = readline.createInterface({ input : process.stdin })
+    this.readline.on("line", data => {
+      this.processes.forEach(process => 
+        process.write(data))
+    })
   }
 
   /**

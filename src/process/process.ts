@@ -38,6 +38,7 @@ export interface IProcess {
   on      (event: "end",   func: () => void)                       : IProcess 
   shell   (): string
   start   (): void
+  write   (data: string): void
   dispose (): void
 }
 class Process extends  events.EventEmitter implements IProcess {
@@ -58,6 +59,7 @@ class Process extends  events.EventEmitter implements IProcess {
     this.child    = undefined
     this.windows  = /^win/.test(process.platform) as boolean
   }
+  
   /**
    * returns the shell command associated with this process.
    * @returns {string}
@@ -65,6 +67,24 @@ class Process extends  events.EventEmitter implements IProcess {
   public shell() : string {
     return this.command
   }
+
+  /**
+   * sends this buffer to the process on stdin.
+   * @param {string} data the buffer to send.
+   * @returns {void}
+   */
+  public write(data: string): void {
+    switch(this.state){
+      case "started":
+        // is there a better way to flush 
+        // this buffer other than \n?
+        this.child.stdin.write(data + "\n");
+        break;
+      default:
+        break;
+    }
+  }
+
   /**
    * starts this process. A process may be started once.
    * @returns {Promise<any>}
