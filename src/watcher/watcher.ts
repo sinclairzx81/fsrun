@@ -26,9 +26,9 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-/// <reference path="../typings/node/node.d.ts" />
 import * as events from "events"
 import * as fs from "fs"
+import {watch} from "./watch"
 
 /**
  * Debounce:
@@ -92,7 +92,7 @@ class Watcher extends events.EventEmitter implements IWatcher {
       case "pending": {
         this.state = "started"
         let options = { recursive: true }
-        this.watcher = fs.watch(this.path, options, (event, filename) => {
+        this.watcher = watch(this.path, options, (event, filename) => {
           this.debounce.set(() => this.emit("data", [event, filename]))
         });
         break;

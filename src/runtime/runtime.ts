@@ -26,8 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-/// <reference path="../typings/node/node.d.ts" />
-
 import * as events                from "events"
 import * as readline              from "readline"
 import {Argument}                 from "../parser/parse"

@@ -26,8 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-/// <reference path="../typings/node/node.d.ts" />
-
 import * as npath from "path"
 import * as fs    from "fs"
 

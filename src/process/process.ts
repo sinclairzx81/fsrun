@@ -26,8 +26,6 @@ THE SOFTWARE.
 
 ---------------------------------------------------------------------------*/
 
-/// <reference path="../typings/node/node.d.ts" />
-
 import * as events        from "events"
 import * as cp            from "child_process"
 
@@ -104,8 +102,8 @@ class Process extends  events.EventEmitter implements IProcess {
         )
         this.child.stdout.setEncoding(this.encoding)
         this.child.stderr.setEncoding(this.encoding)
-        this.child.stdout.on("data", data => emit_data(data))
-        this.child.stderr.on("data", data => emit_data(data))
+        this.child.stdout.on("data", data => emit_data(data as Buffer))
+        this.child.stderr.on("data", data => emit_data(data as Buffer))
         this.child.on("close", () => this.dispose())
         break;
       default:
