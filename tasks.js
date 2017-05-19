@@ -29,6 +29,7 @@ const test = () => task.series(() => [
 // installs module.
 //------------------------------------
 const install = () => task.series(() => [
+  build(),
   task.shell("cd ./bin && npm install -g .")
 ])
 

@@ -88,7 +88,28 @@ class Process extends  events.EventEmitter implements IProcess {
    * @returns {Promise<any>}
    */
   public start() : void {
-    let emit_data = (data: NodeBuffer) => {
+    //-------------------------------------
+    // NOTE: extract arguments from command.
+    // we do this specifically for starting
+    // linux processes where there are 
+    // challenges terminating sh processes.
+    //-------------------------------------
+    const extract = (command:string) => {
+        var parts = command.split(" ")
+        if(parts.length === 0) {
+            return {
+                app: "echo",
+                args: ["nothing", "to", "run"]
+            }
+        } else {
+            let command = parts.shift()
+            return {
+                app: command,
+                args: parts
+            }
+        }
+    }
+    const emit_data = (data: NodeBuffer) => {
       if(this.state === "started"){
         this.emit("data", [this.id, data])
       }
@@ -96,10 +117,21 @@ class Process extends  events.EventEmitter implements IProcess {
     switch(this.state) {
       case "pending":
         this.state = "started"
-        this.child = cp.spawn (
-          this.windows ? 'cmd' : 'sh', 
-          [ this.windows ? '/c':'-c', this.command ]
-        )
+
+        //-------------------------------------
+        // NOTE: spawn the process via cmd if
+        // on windows, or directly if running
+        // linux. This was implemented as a work
+        // around to not being able to terminate
+        // sh child processes.
+        //-------------------------------------       
+        if(this.windows) {
+          this.child = cp.spawn("cmd", ["/c", this.command])
+        } else {
+          const _command = extract(this.command)
+          this.child = cp.spawn(_command.app, _command.args)
+        }
+
         this.child.stdout.setEncoding(this.encoding)
         this.child.stderr.setEncoding(this.encoding)
         this.child.stdout.on("data", data => emit_data(data as Buffer))
