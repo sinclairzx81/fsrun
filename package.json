@@ -1,6 +1,6 @@
 {
   "name": "fsrun",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "start and restart os processes on file system watch events.",
   "main": "./src/index.js",
   "scripts": {
